@@ -16,7 +16,7 @@ recognized, it counts as "getting through."
 ---
 
 ## Author / 作成者
-**Shunichiro Nakao, MD, MSc, PhD** — Emergency physician (救急医)
+**Shunichiro Nakao, MD, MSc, PhD** (Emergency physician)
 Department of Traumatology and Acute Critical Medicine, The University of Osaka
 
 This application and its underlying corpus were developed by Dr. Shunichiro Nakao with the
