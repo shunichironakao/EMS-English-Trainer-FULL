@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>救急英語トレーナー — 音声で「通じる」を体感</title>
+<style>
+:root{
+  --bg:#0f172a; --panel:#1e293b; --panel2:#243349; --line:#334155;
+  --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --accent2:#0ea5e9;
+  --ok:#22c55e; --okbg:#052e16; --warn:#f59e0b; --bad:#ef4444; --badbg:#3f1d1d;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+header{background:linear-gradient(135deg,#0c4a6e,#075985);padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+header h1{margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
+header p{margin:6px 0 0;color:#bae6fd;font-size:13px}
+.wrap{max-width:880px;margin:0 auto;padding:16px 20px 60px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:14px 0}
+.progress{font-size:14px;color:var(--muted)}
+.progress b{color:var(--accent);font-size:18px}
+.pbar{height:8px;background:var(--panel);border-radius:99px;overflow:hidden;flex:1;min-width:120px;margin:0 10px}
+.pbar>div{height:100%;background:linear-gradient(90deg,var(--ok),#4ade80);width:0;transition:width .4s}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:99px;font-size:13px;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent2);border-color:var(--accent);color:#001018;font-weight:700}
+.chip.chipdone{border-color:var(--ok)}
+.chip.chipdone:not(.on){color:#86efac}
+.phasebar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 6px}
+.pstep{flex:1 1 0;min-width:84px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 4px;font-size:11px;line-height:1.3;color:var(--muted);cursor:pointer;transition:.12s}
+.pstep .pnum{display:inline-block;min-width:18px;height:18px;border-radius:50%;background:var(--line);color:var(--text);font-weight:700;font-size:11px;line-height:18px;margin-bottom:3px}
+.pstep.on{background:var(--accent2);color:#001018;border-color:var(--accent);font-weight:700}
+.pstep.on .pnum{background:#001018;color:var(--accent)}
+.pstep.pdone{border-color:var(--ok)}
+.pstep.pdone .pnum{background:var(--ok);color:#022}
+.pstep.empty{opacity:.4;cursor:default}
+.phasenav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 4px}
+.phasenav .pt{font-weight:700;color:var(--accent);font-size:14px;text-align:center;flex:1}
+.phasenav button[disabled]{opacity:.4;cursor:default}
+.settings{display:flex;flex-wrap:wrap;gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;font-size:13px}
+.settings label{color:var(--muted);display:flex;align-items:center;gap:8px}
+select,input[type=range]{accent-color:var(--accent);background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0;transition:.2s}
+.card.done{border-color:var(--ok);background:linear-gradient(180deg,var(--panel),#10261a)}
+.card .tag{display:inline-block;font-size:11px;color:#7dd3fc;background:#0c4a6e;padding:2px 9px;border-radius:99px;margin-bottom:8px}
+.card .ja{font-size:16px;font-weight:700;margin:2px 0 6px}
+.card .en{font-size:22px;font-weight:800;letter-spacing:.3px;color:#fff;margin:6px 0}
+.card .en.hidden{filter:blur(7px);user-select:none}
+.card .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+button.act{border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer}
+.mic{background:var(--accent2);color:#001018}
+.mic.listening{background:var(--bad);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.6)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.result{margin-top:12px;font-size:14px;min-height:0}
+.heard{color:var(--muted)}
+.heard b{color:var(--text)}
+.verdict{font-size:18px;font-weight:800;margin-top:6px}
+.verdict.ok{color:var(--ok)}
+.verdict.no{color:var(--warn)}
+.kw{display:inline-block;padding:1px 8px;border-radius:6px;margin:2px;font-size:13px}
+.kw.hit{background:var(--okbg);color:#86efac;border:1px solid #166534}
+.kw.miss{background:var(--badbg);color:#fca5a5;border:1px solid #7f1d1d}
+.note{font-size:12px;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+.banner{background:var(--badbg);border:1px solid var(--bad);color:#fecaca;border-radius:10px;padding:12px;margin:10px 0;font-size:14px;display:none}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:24px}
+.credit{font-size:11px;color:var(--muted);line-height:1.6;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.credit b{color:var(--text)}
+.overlay{position:fixed;inset:0;background:rgba(2,6,23,.78);display:none;align-items:flex-start;justify-content:center;z-index:50;overflow:auto;padding:24px 12px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h2{margin:0 0 4px;font-size:19px;color:#fff}
+.modal .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.q{margin:14px 0;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.q .qt{font-size:14px;font-weight:600;margin-bottom:8px}
+.q .qt .en{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.likert{display:flex;gap:6px;flex-wrap:wrap}
+.likert label{flex:1;min-width:54px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 4px;cursor:pointer;font-size:12px;transition:.12s}
+.likert input{display:block;margin:0 auto 4px}
+.likert label:hover{border-color:var(--accent)}
+.likert input:checked+span{color:var(--accent);font-weight:700}
+.scale-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px}
+.opts label{margin-right:14px;font-size:14px;cursor:pointer}
+.modal select,.modal textarea{width:100%;margin-top:6px}
+.modal textarea{min-height:64px;resize:vertical}
+.req{color:#fca5a5}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.thanks{text-align:center;padding:20px}
+.thanks .big{font-size:40px}
+#homeView{margin:18px 0}
+.homeTitle{font-size:19px;font-weight:700;margin:6px 0 16px;text-align:center;line-height:1.5}
+.symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.symcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 12px;text-align:center;cursor:pointer;transition:.15s}
+.symcard:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.symcard.done{border-color:var(--ok);background:linear-gradient(180deg,var(--panel),#10261a)}
+.symcard .emoji{font-size:40px;display:block;margin-bottom:8px}
+.symcard .nm{font-weight:700;font-size:16px}
+.symcard .pg{margin-top:6px;font-size:12px;color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚑 救急英語トレーナー <span style="font-size:13px;font-weight:400;color:#bae6fd">音声で「通じる」を体感</span></h1>
+  <p><b>10症候別</b>に、救急現場で必要な情報を英語で聞き出す練習。<b>音声認識で意味が伝われば「通じた！」</b>と判定します（多少の発音差はOK）。まず症候を選んでください。</p>
+</header>
+<div class="wrap">
+  <div id="banner" class="banner"></div>
+
+  <div id="homeView"></div>
+  <button class="act ghost" id="backHome" style="display:none">← 症候を選び直す</button>
+
+  <div class="bar">
+    <div class="progress"><b id="symLabel"></b>　通じた <b><span id="doneN">0</span></b> / <span id="totalN">0</span> <span id="overall" style="margin-left:8px;font-size:12px"></span></div>
+    <div class="pbar"><div id="pfill"></div></div>
+    <button class="act ghost" id="surveyBtn">📝 アンケート</button>
+    <button class="act ghost" id="resetBtn">進捗リセット</button>
+  </div>
+
+  <div class="chips" id="groupChips"></div>
+  <div class="phasebar" id="phaseBar"></div>
+  <div class="phasenav" id="phaseNav"></div>
+
+  <div class="settings">
+    <label>判定のゆるさ:
+      <select id="sens">
+        <option value="0.5">やさしい</option>
+        <option value="0.6" selected>標準</option>
+        <option value="0.8">きびしい</option>
+      </select>
+    </label>
+    <label>発音の地域:
+      <select id="accent">
+        <option value="en-US" selected>アメリカ英語</option>
+        <option value="en-GB">イギリス英語</option>
+        <option value="en-AU">オーストラリア英語</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="hideEn"> 英語を隠して挑戦</label>
+    <label><input type="checkbox" id="onlyTodo"> 未通過のみ表示</label>
+  </div>
+
+  <div class="note">🎤 を押して英語で話し、<b>話し終えたら ■ を押す</b>。<b>キーワードが伝われば成功</b>です（語順や細かい発音が違ってもOK）。<br>
+  ⏱ <b>話し終えると自動で停止</b>します（約2秒の無音で確定）。文中の短いポーズでは切れないので<b>2文でも続けて言えます</b>。途中で止めたい時は ■ を押してください。<br>
+  ※ マイク利用には <b>Chrome / Edge</b> と <b>localhost または https</b> での実行が必要です。</div>
+
+  <div id="cards"></div>
+</div>
+<div class="overlay" id="surveyOverlay">
+  <div class="modal" id="surveyModal"></div>
+</div>
+<footer>
+  <span style="font-weight:700">作成者　Shunichiro Nakao, MD, MSc, PhD</span><br>
+  <span style="font-weight:700">Department of Traumatology and Acute Critical Medicine</span><br>
+  <span style="font-weight:700">The University of Osaka</span><br>
+  This project was supported by a grant from The Mitsubishi Foundation.<br>
+  <span style="opacity:.85">救急隊員発話コーパス(6,185発話/68,063語, 氏名除去・病院連絡除外)と、その出現頻度・共起分析(MI/Effect≥2)・中学校レベル文法を基盤に、救急専門医が現場の流れに沿って作成・調整した表現を使用。</span>
+</footer>
+
+<script src="app_data.js"></script>
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const banner=document.getElementById('banner');
+if(!SR){ banner.style.display='block'; banner.innerHTML='⚠️ このブラウザは音声認識に未対応です。<b>Google Chrome</b> または <b>Microsoft Edge</b> で開いてください。'; }
+
+let progress = JSON.parse(localStorage.getItem('ems_progress')||'{}');
+// 10症候別ナビゲーション
+const SYMPTOMS = [...new Set(EXPRESSIONS.map(e=>e.symptom))];
+const SYM_JA = {}; EXPRESSIONS.forEach(e=>{ SYM_JA[e.symptom]=e.symptom_ja; });
+let curGroup = SYMPTOMS[0];   // 既定: 最初の症候
+const groups = SYMPTOMS;       // チップ = 10症候
+const itemsOf=(sym,ph)=>EXPRESSIONS.filter(e=>e.symptom===sym && (ph==null||e.phase===ph));
+const phasesPresent=(sym)=>PHASES.filter(p=>itemsOf(sym,p.n).length>0).map(p=>p.n);
+let curPhase = (phasesPresent(curGroup)[0]||1);   // そのフェーズに該当が無ければ最初の有効フェーズ
+let view = 'home';   // 'home'(症候選択) | 'train'(トレーニング)
+const SYM_EMOJI = {
+  "01_Chest_Pain":"🫀","02_Respiratory_Distress":"🫁","03_Dizziness":"💫","04_Headache":"🤕",
+  "05_Back_Pain":"🦴","06_Altered_Consciousness":"😴","07_Abdominal_Pain":"😣",
+  "08_Nausea_Vomiting":"🤮","09_Weakness":"🪫","10_General_Fatigue":"😵"
+};
+function renderHome(){
+  const hv=document.getElementById('homeView');
+  const grid=SYMPTOMS.map(s=>{
+    const tot=itemsOf(s).length, dn=itemsOf(s).filter(e=>progress[e.id]).length;
+    const done=dn>=tot&&tot>0;
+    return `<div class="symcard${done?' done':''}" data-sym="${s}">
+      <span class="emoji">${SYM_EMOJI[s]||'🩺'}</span>
+      <div class="nm">${SYM_JA[s]}</div>
+      <div class="pg">${dn}/${tot}${done?' ✓':''}</div></div>`;
+  }).join('');
+  hv.innerHTML=`<div class="homeTitle">🩺 症候を選択してください<br><span style="font-size:13px;color:var(--muted);font-weight:400">Select a chief complaint to start training</span></div><div class="symgrid">${grid}</div>`;
+  hv.querySelectorAll('[data-sym]').forEach(c=>c.onclick=()=>{
+    curGroup=c.dataset.sym; curPhase=(phasesPresent(curGroup)[0]||1); view='train'; window.scrollTo(0,0); render();
+  });
+}
+
+// ---------- matching ----------
+const norm = s => s.toLowerCase().replace(/[^a-z0-9\s']/g,' ').replace(/\s+/g,' ').trim();
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m)return n; if(!n)return m;
+  let prev=[...Array(n+1).keys()],cur=new Array(n+1);
+  for(let i=1;i<=m;i++){cur[0]=i;
+    for(let j=1;j<=n;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));}
+    [prev,cur]=[cur,prev];
+  } return prev[n];
+}
+const ratio=(a,b)=>1 - lev(a,b)/Math.max(a.length,b.length,1);
+function judge(transcript,item){
+  const t=norm(transcript), tokens=t.split(' ').filter(Boolean);
+  let hits=[],miss=[];
+  for(const kw of item.keywords){
+    let ok = t.includes(kw);
+    if(!ok) for(const w of tokens){ if(ratio(w,kw)>=0.78){ok=true;break;} }
+    (ok?hits:miss).push(kw);
+  }
+  const kwCov = item.keywords.length ? hits.length/item.keywords.length : 0;
+  let best=0; for(const a of item.acceptable){ best=Math.max(best, ratio(t, norm(a))); }
+  return {score:Math.max(kwCov,best), kwCov, best, hits, miss};
+}
+
+// ---------- render ----------
+function render(){
+  const home = view==='home';
+  document.getElementById('homeView').style.display = home?'block':'none';
+  document.getElementById('backHome').style.display = home?'none':'inline-block';
+  document.querySelector('.bar').style.display = home?'none':'flex';
+  document.getElementById('groupChips').style.display = 'none';
+  document.getElementById('phaseBar').style.display = home?'none':'flex';
+  document.getElementById('phaseNav').style.display = home?'none':'flex';
+  document.querySelector('.settings').style.display = home?'none':'flex';
+  document.getElementById('cards').style.display = home?'none':'block';
+  if(home){ renderHome(); return; }
+  // 8フェーズ・ステッパー
+  const present=phasesPresent(curGroup);
+  if(!present.includes(curPhase)) curPhase=present[0]||1;
+  const pb=document.getElementById('phaseBar'); pb.innerHTML='';
+  PHASES.forEach(p=>{
+    const its=itemsOf(curGroup,p.n); const has=its.length>0;
+    const dn=its.filter(e=>progress[e.id]).length;
+    const s=document.createElement('div');
+    s.className='pstep'+(p.n===curPhase?' on':'')+(!has?' empty':'')+(has&&dn>=its.length?' pdone':'');
+    s.title=p.en||'';
+    s.innerHTML=`<span class="pnum">${p.n}</span>${p.name}${has?`<br><span style="opacity:.7">${dn}/${its.length}</span>`:'<br><span style="opacity:.6">—</span>'}`;
+    if(has) s.onclick=()=>{ curPhase=p.n; render(); };
+    pb.appendChild(s);
+  });
+  // フェーズ・ナビ
+  const pn=document.getElementById('phaseNav');
+  const idx=present.indexOf(curPhase);
+  const cur=PHASES.find(p=>p.n===curPhase);
+  pn.innerHTML=`
+    <button class="act ghost" id="prevPhase" ${idx<=0?'disabled':''}>← 前のフェーズ</button>
+    <span class="pt">Phase ${curPhase}/8 ・ ${cur?cur.name:''}${cur&&cur.en?' ('+cur.en+')':''}</span>
+    <button class="act mic" id="nextPhase" ${idx>=present.length-1?'disabled':''}>次のフェーズ →</button>`;
+  pn.querySelector('#prevPhase').onclick=()=>{ if(idx>0){curPhase=present[idx-1];window.scrollTo(0,0);render();} };
+  pn.querySelector('#nextPhase').onclick=()=>{ if(idx<present.length-1){curPhase=present[idx+1];window.scrollTo(0,0);render();} };
+
+  const onlyTodo=document.getElementById('onlyTodo').checked;
+  const hideEn=document.getElementById('hideEn').checked;
+  const list=EXPRESSIONS.filter(e=> e.symptom===curGroup && e.phase===curPhase && !(onlyTodo&&progress[e.id]));
+  const cards=document.getElementById('cards'); cards.innerHTML='';
+  if(list.length===0){ cards.innerHTML='<div class="note">このフェーズに該当する表現はありません。「次のフェーズ →」へ進んでください。</div>'; }
+  list.forEach(item=>{
+    const c=document.createElement('div'); c.className='card'+(progress[item.id]?' done':''); c.id='card_'+item.id;
+    const meta=`${item.tag||'発話'}${item.adopted?' ・ 教材採用':''}${item.freq?' ・ コーパス頻度 '+item.freq+'回':''}`;
+    c.innerHTML=`
+      <span class="tag">${item.order}. ${item.tag||'発話'}</span>${item.adopted?' <span class="tag" style="background:#14532d;color:#bbf7d0">教材採用</span>':''}${progress[item.id]?' <span style="color:var(--ok)">✓ 通過</span>':''}
+      <div class="ja">🗣 ${item.prompt_ja}</div>
+      <div class="en ${hideEn?'hidden':''}">${item.target}</div>
+      <div class="meta">${meta}</div>
+      <div class="row">
+        <button class="act mic" data-id="${item.id}">🎤 話す</button>
+        <button class="act ghost" data-play="${item.id}">🔊 お手本</button>
+        <button class="act ghost" data-reveal="${item.id}">👁 英語を表示</button>
+      </div>
+      <div class="result" id="res_${item.id}"></div>`;
+    cards.appendChild(c);
+  });
+  document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>toggleMic(b.dataset.id,b));
+  document.querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>speak(b.dataset.play));
+  document.querySelectorAll('[data-reveal]').forEach(b=>b.onclick=()=>{
+    const el=document.querySelector('#card_'+CSS.escape(b.dataset.reveal)+' .en'); el.classList.toggle('hidden');
+  });
+  updateProgress();
+}
+function updateProgress(){
+  // 現在の症候の進捗をバーに表示
+  const symItems=EXPRESSIONS.filter(e=>e.symptom===curGroup);
+  const symDone=symItems.filter(e=>progress[e.id]).length;
+  const overall=EXPRESSIONS.filter(e=>progress[e.id]).length;
+  document.getElementById('doneN').textContent=symDone;
+  document.getElementById('totalN').textContent=symItems.length;
+  document.getElementById('symLabel').textContent=SYM_JA[curGroup]||'';
+  document.getElementById('overall').textContent=`全体 ${overall}/${EXPRESSIONS.length}`;
+  document.getElementById('pfill').style.width=(symItems.length?100*symDone/symItems.length:0)+'%';
+  // 1症候を完了したら自動でアンケート(初回のみ)
+  const anyComplete=SYMPTOMS.some(s=>{const it=EXPRESSIONS.filter(e=>e.symptom===s); return it.length>0 && it.every(e=>progress[e.id]);});
+  if(anyComplete && !localStorage.getItem('ems_survey_shown')){
+    localStorage.setItem('ems_survey_shown','1');
+    setTimeout(()=>openSurvey(true), 700);
+  }
+}
+
+// ---------- speech ----------
+// お手本は英語ネイティブ音声を明示選択（既定の日本語ボイスを避ける）
+let VOICES=[];
+function loadVoices(){ try{ VOICES=speechSynthesis.getVoices()||[]; }catch(_){ VOICES=[]; } }
+loadVoices();
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=loadVoices;
+function pickVoice(lang){
+  if(!VOICES.length) loadVoices();
+  const want=(lang||'en-US').toLowerCase();
+  const norm=v=>(v.lang||'').replace('_','-').toLowerCase();
+  let pool=VOICES.filter(v=>norm(v).startsWith(want));
+  if(!pool.length) pool=VOICES.filter(v=>norm(v).startsWith('en'));   // 英語にフォールバック
+  // 北米英語の良質な音声を優先
+  const prefer=['Google US English','Samantha','Aria','Jenny','Guy','Ava','Alex','Microsoft David','Microsoft Zira','Nicky','Eddy'];
+  for(const name of prefer){ const v=pool.find(v=>(v.name||'').includes(name)); if(v) return v; }
+  return pool[0]||null;
+}
+function speak(id){
+  const item=EXPRESSIONS.find(e=>e.id===id); if(!item)return;
+  const u=new SpeechSynthesisUtterance(item.target); u.rate=.9;
+  const v=pickVoice(document.getElementById('accent').value);
+  if(v){ u.voice=v; u.lang=v.lang; } else { u.lang=document.getElementById('accent').value; }
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+// 録音は「無音で自動停止」。文中の短いポーズ(<沈黙判定)では切れず、
+// 話し終えて一定の無音が続くと自動で確定する。手動停止も可。
+let S=null;                 // 現在の録音セッション
+const SILENCE_MS=2200;      // 発話が途切れてから自動停止するまでの無音(約2.2秒)
+const NOSPEECH_MS=6000;     // 最初の発話を待つ時間(これを過ぎても無音なら停止)
+const MAX_MS=12000;         // 絶対上限(安全弁・12秒)
+function toggleMic(id,btn){
+  if(!SR){ alert('音声認識に未対応のブラウザです。Chrome/Edge をご利用ください。'); return; }
+  if(S){ const same=S.id===id; stopMic(); if(same) return; }  // 録音中に同じボタン→即停止
+  startMic(id,btn);
+}
+function startMic(id,btn){
+  const item=EXPRESSIONS.find(e=>e.id===id);
+  const res=document.getElementById('res_'+id);
+  const rec=new SR();
+  rec.lang=document.getElementById('accent').value;
+  rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=3;
+  const sess={rec,id,btn,item,res,finals:[],done:false,sil:null,timer:null};
+  S=sess;
+  btn.classList.add('listening'); btn.textContent='■ 停止';
+  res.innerHTML='<span class="heard">🔴 録音中… 話し終えると自動で止まります</span>';
+  const armSilence=(ms)=>{ clearTimeout(sess.sil); sess.sil=setTimeout(()=>{ try{rec.stop();}catch(_){} }, ms); };
+  rec.onresult=(ev)=>{
+    if(S!==sess) return;
+    let interim='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const r=ev.results[i];
+      if(r.isFinal) sess.finals.push(r[0].transcript); else interim+=r[0].transcript;
+    }
+    const shown=(sess.finals.join(' ')+' '+interim).trim();
+    sess.res.innerHTML='<span class="heard">🔴 録音中… <b>'+(shown||'…')+'</b></span>';
+    armSilence(SILENCE_MS);     // 発話のたびに無音タイマーをリセット
+  };
+  rec.onerror=(e)=>{
+    if(e.error==='not-allowed'){ sess.res.innerHTML='<span class="verdict no">⚠️ マイクへのアクセスを許可してください</span>'; try{rec.stop();}catch(_){} }
+    // no-speech 等は onend で確定処理へ
+  };
+  rec.onend=()=>finishMic(sess);   // 自動再開しない＝無音になれば素直に終了
+  try{ rec.start(); }catch(e){ S=null; btn.classList.remove('listening'); btn.textContent='🎤 話す'; res.innerHTML='<span class="verdict no">開始できませんでした</span>'; return; }
+  armSilence(NOSPEECH_MS);                                   // 最初の発話を待つ
+  sess.timer=setTimeout(()=>{ try{rec.stop();}catch(_){} }, MAX_MS);  // 絶対上限
+}
+function stopMic(){ if(S){ try{S.rec.stop();}catch(_){} } }
+function finishMic(sess){
+  clearTimeout(sess.sil); clearTimeout(sess.timer);
+  if(sess.done) return; sess.done=true;
+  if(S===sess) S=null;
+  const {id,item,res,btn,finals}=sess;
+  btn.classList.remove('listening'); btn.textContent='🎤 話す';
+  const text=finals.join(' ').replace(/\s+/g,' ').trim();
+  if(!text){ res.innerHTML='<span class="verdict no">⚠️ 音声が聞き取れませんでした。もう一度どうぞ</span>'; return; }
+  showResult(id,text,judge(text,item));   // 全文(2文でも)をまとめて判定
+}
+function showResult(id,text,j){
+  const item=EXPRESSIONS.find(e=>e.id===id);
+  const res=document.getElementById('res_'+id);
+  const thr=parseFloat(document.getElementById('sens').value);
+  const ok = j.score>=thr;
+  const kwHtml=[...j.hits.map(k=>`<span class="kw hit">${k} ✓</span>`),...j.miss.map(k=>`<span class="kw miss">${k} ?</span>`)].join('');
+  res.innerHTML=`<div class="heard">認識: <b>${text}</b></div>
+    <div class="verdict ${ok?'ok':'no'}">${ok?'✅ 通じました！':'🔁 もう一度 — 伝わった度 '+Math.round(j.score*100)+'%'}</div>
+    <div style="margin-top:6px">${kwHtml}</div>
+    ${ok?'<div class="meta" style="margin-top:4px;color:#86efac">発音が多少違っても意味は伝わりました 👍</div>':'<div class="meta" style="margin-top:4px">? のキーワードを意識してもう一度どうぞ</div>'}`;
+  if(ok && !progress[id]){ progress[id]=true; localStorage.setItem('ems_progress',JSON.stringify(progress));
+    document.getElementById('card_'+id).classList.add('done'); }
+  updateProgress();
+}
+
+// ================= アンケート (5段階 Likert) =================
+const SURVEY_AFTER = 6;       // 何項目「通じた」で自動表示するか(1症候相当)
+const SURVEY_ENDPOINT = "";   // ★研究者用: 回答送信先URL(Formspree等)。空なら端末保存のみ。
+const APP_VERSION = "1.0";
+const LIKERT = ["1 全くそう思わない","2","3 どちらでもない","4","5 強くそう思う"];
+const QUESTIONS = [
+  ["q1","操作は簡単だった","The app was easy to use."],
+  ["q2","音声認識の「通じた」判定は妥当だった","The recognition (got-through) judgment was reasonable."],
+  ["q3","多少の発音差でも通じる体験ができた","I could get my message across despite minor pronunciation differences."],
+  ["q4","救急現場で必要な英語表現を学べた","I learned English expressions needed at emergency scenes."],
+  ["q5","実際の救急活動に役立つと思う","This app would be useful for actual EMS practice."],
+  ["q6","英語で患者に対応する自信が高まった","My confidence in handling patients in English improved."],
+  ["q7","今後も使いたい・同僚に勧めたい","I would keep using it / recommend it to colleagues."],
+];
+function openSurvey(auto){
+  const m=document.getElementById('surveyModal');
+  const likert=(id)=>`<div class="q"><div class="qt">${QUESTIONS.find(q=>q[0]===id)[1]}<span class="en">${QUESTIONS.find(q=>q[0]===id)[2]}</span></div>
+    <div class="likert">${[1,2,3,4,5].map(v=>`<label><input type="radio" name="${id}" value="${v}"><span>${v}</span></label>`).join('')}</div>
+    <div class="scale-ends"><span>全くそう思わない / Strongly disagree</span><span>強くそう思う / Strongly agree</span></div></div>`;
+  m.innerHTML=`
+    <h2>📝 ご利用後アンケート / Survey</h2>
+    <div class="sub">研究・改善のためご協力ください（匿名・約1分）。 For research and improvement (anonymous, ~1 min).</div>
+    <div class="q"><div class="qt">英語圏に住んだ経験 <span class="req">*</span><span class="en">Experience living in an English-speaking country</span></div>
+      <div class="opts">
+        <label><input type="radio" name="eng" value="yes"> あり / Yes</label>
+        <label><input type="radio" name="eng" value="no"> なし / No</label>
+      </div></div>
+    <div class="q"><div class="qt">職種（任意）<span class="en">Role (optional)</span>
+      <select id="sv_role">
+        <option value="">— 選択 / select —</option>
+        <option>救急隊員・救急救命士 / Paramedic・EMT</option>
+        <option>医師 / Physician</option>
+        <option>看護師 / Nurse</option>
+        <option>学生 / Student</option>
+        <option>その他 / Other</option>
+      </select></div></div>
+    ${QUESTIONS.map(q=>likert(q[0])).join('')}
+    <div class="q" style="border:none"><div class="qt">自由記述（任意）<span class="en">Comments (optional)</span>
+      <textarea id="sv_comment" placeholder="改善点・感想など / suggestions, impressions…"></textarea></div></div>
+    <div id="sv_err" class="req" style="display:none">必須項目にご回答ください / Please answer the required items.</div>
+    <div class="actions">
+      <button class="act ghost" onclick="downloadSurveyCSV()">📥 回答CSV(研究者用)</button>
+      <button class="act ghost" id="sv_cancel">${auto?'あとで / Later':'閉じる / Close'}</button>
+      <button class="act mic" id="sv_submit">送信 / Submit</button>
+    </div>`;
+  document.getElementById('surveyOverlay').classList.add('show');
+  document.getElementById('sv_cancel').onclick=closeSurvey;
+  document.getElementById('sv_submit').onclick=submitSurvey;
+}
+function closeSurvey(){ document.getElementById('surveyOverlay').classList.remove('show'); }
+function submitSurvey(){
+  const val=n=>{const el=document.querySelector(`input[name="${n}"]:checked`);return el?el.value:null;};
+  const eng=val('eng'); const ans={}; let ok=eng;
+  QUESTIONS.forEach(q=>{ans[q[0]]=val(q[0]); if(!ans[q[0]])ok=false;});
+  if(!ok){ document.getElementById('sv_err').style.display='block'; return; }
+  const resp={ts:new Date().toISOString(),version:APP_VERSION,english_residence:eng,
+    role:document.getElementById('sv_role').value||"",
+    ...ans, comment:document.getElementById('sv_comment').value||"",
+    completed:EXPRESSIONS.filter(e=>progress[e.id]).length};
+  const all=JSON.parse(localStorage.getItem('ems_survey_responses')||'[]'); all.push(resp);
+  localStorage.setItem('ems_survey_responses',JSON.stringify(all));
+  if(SURVEY_ENDPOINT){ try{ fetch(SURVEY_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(resp)}); }catch(_){} }
+  document.getElementById('surveyModal').innerHTML=`<div class="thanks"><div class="big">🙏</div>
+    <h2>ありがとうございました！</h2><div class="sub">Thank you for your feedback.</div>
+    <div class="actions" style="justify-content:center"><button class="act mic" onclick="closeSurvey()">閉じる / Close</button></div></div>`;
+}
+function downloadSurveyCSV(){
+  const all=JSON.parse(localStorage.getItem('ems_survey_responses')||'[]');
+  if(!all.length){ alert('保存された回答がありません / No saved responses on this device.'); return; }
+  const cols=["ts","version","english_residence","role","q1","q2","q3","q4","q5","q6","q7","comment","completed"];
+  const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[cols.join(',')].concat(all.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='ems_survey_responses.csv'; a.click();
+}
+document.getElementById('backHome').onclick=()=>{ view='home'; window.scrollTo(0,0); render(); };
+document.getElementById('surveyBtn').onclick=()=>openSurvey(false);
+document.getElementById('surveyOverlay').onclick=(e)=>{ if(e.target.id==='surveyOverlay') closeSurvey(); };
+
+document.getElementById('resetBtn').onclick=()=>{ if(confirm('進捗をリセットしますか？')){ progress={}; localStorage.removeItem('ems_progress'); render(); } };
+['hideEn','onlyTodo'].forEach(id=>document.getElementById(id).addEventListener('change',render));
+document.getElementById('totalN').textContent=EXPRESSIONS.length;
+render();
+</script>
+</body>
+</html>
