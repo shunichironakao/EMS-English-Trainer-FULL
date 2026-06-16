@@ -22,8 +22,8 @@ Department of Traumatology and Acute Critical Medicine, The University of Osaka
 This application and its underlying corpus were developed by Dr. Shunichiro Nakao with the
 assistance of **Anthropic's Claude Code**.
 
-## 表現監修 / Expression supervision
-**Mr. Taiki Mochizuki** — EMS professional（救急表現の監修）
+## 英語表現の協力 / English expression support
+**Mr. Taiki Mochizuki** — Paramedic (USA) / 米国パラメディック
 
 ## Funding / 助成
 > **This project was supported by a grant from The Mitsubishi Foundation.**
